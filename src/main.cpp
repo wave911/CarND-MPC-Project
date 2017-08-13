@@ -108,7 +108,7 @@ int main() {
 			double delta = j[1]["steering_angle"];
 			double acceleration = j[1]["throttle"];
 
-          //since waypoint locations are in meters, we must convert velocity to meters / second (m/h to m/s)
+			//mp/s -> m/s
 			v *= 0.44704;
 
 			auto points = translateGlobalToLocalCoordinates(px, py, psi, ptsx, ptsy);
@@ -116,8 +116,6 @@ int main() {
 			double throttle_value;
 
 			const double Lf = 2.67;
-
-			//have to predict state after the latency
 			double latency = 0.1;
 
 			px += v * cos(psi) * latency;
@@ -129,7 +127,7 @@ int main() {
 			Eigen::VectorXd yPoints = points.row(1);
 
 			auto coeffs = polyfit(xPoints, yPoints, 3);
-			double cte = polyeval(coeffs, 0); // 0 because the car is the reference point
+			double cte = polyeval(coeffs, 0);
 			double ote = - atan(coeffs[1]);
 
 			Eigen::VectorXd car_state(6);
