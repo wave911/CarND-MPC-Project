@@ -1,6 +1,30 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+This is one of most difficult projects so far in this nanodegree program. I used heavily code from
+the quiz from the lessons - very useful. The model uses as was used in the quiz and the same set of
+equations as was described in lesson:
+
+x_[t] = x[t-1] + v[t-1] * cos(psi[t-1]) * dt
+y_[t] = y[t-1] + v[t-1] * sin(psi[t-1]) * dt
+psi_[t] = psi[t-1] + v[t-1] / Lf * delta[t-1] * dt
+v_[t] = v[t-1] + a[t-1] * dt
+cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
+epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
+
+Also two actuator values were optimized by code: steering value and throttle as an addition to the
+state vector. I started with the the same values for N and dt as were used from quiz but found that
+they doesn't work in simulator well. Car sometimes lost its track and crash somewhere. I think it is
+because were trying to predict too far. Then I decreased N to 15 - it works fine. And also increased
+dt to 0.1 to align it with latency.
+The waypoints are coming in global coordinates and therefore are needed to be translated into car's
+coordinate system like were done in particle filter project.
+For calculating steering values I needed to play a bit with penalties. I found that if setting high values
+leads to more smoother driving but it can ended up with leaving the road but setting too low values
+leads to too sharp driving which is also not good. So try and error approach was used.
+These hardcoded values I don't like and I think there are a lot of papers, investigations describing this -
+but I did not dive into it.
+
 ---
 
 ## Dependencies
@@ -19,7 +43,7 @@ Self-Driving Car Engineer Nanodegree Program
   * Run either `install-mac.sh` or `install-ubuntu.sh`.
   * If you install from source, checkout to commit `e94b6e1`, i.e.
     ```
-    git clone https://github.com/uWebSockets/uWebSockets 
+    git clone https://github.com/uWebSockets/uWebSockets
     cd uWebSockets
     git checkout e94b6e1
     ```
@@ -42,7 +66,7 @@ Self-Driving Car Engineer Nanodegree Program
        per this [forum post](https://discussions.udacity.com/t/incorrect-checksum-for-freed-object/313433/19).
   * Linux
     * You will need a version of Ipopt 3.12.1 or higher. The version available through `apt-get` is 3.11.x. If you can get that version to work great but if not there's a script `install_ipopt.sh` that will install Ipopt. You just need to download the source from the Ipopt [releases page](https://www.coin-or.org/download/source/Ipopt/) or the [Github releases](https://github.com/coin-or/Ipopt/releases) page.
-    * Then call `install_ipopt.sh` with the source directory as the first argument, ex: `sudo bash install_ipopt.sh Ipopt-3.12.1`. 
+    * Then call `install_ipopt.sh` with the source directory as the first argument, ex: `sudo bash install_ipopt.sh Ipopt-3.12.1`.
   * Windows: TODO. If you can use the Linux subsystem and follow the Linux instructions.
 * [CppAD](https://www.coin-or.org/CppAD/)
   * Mac: `brew install cppad`
