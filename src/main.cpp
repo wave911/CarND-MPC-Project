@@ -44,8 +44,7 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
-Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
-                        int order) {
+Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals, int order) {
   assert(xvals.size() == yvals.size());
   assert(order >= 1 && order <= xvals.size() - 1);
   Eigen::MatrixXd A(xvals.size(), order + 1);
@@ -63,6 +62,21 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
   auto Q = A.householderQr();
   auto result = Q.solve(yvals);
   return result;
+}
+
+Eigen::MatrixXd translateGlobalToLocalCoordinates(double carX, double carY,
+												  double carPsi, const vector<double> & ptsx,
+												  const vector<double> & ptsy){
+	assert(ptsx.size() == ptsy.size());
+	int length = ptsx.size();
+	auto pts = Eigen::MatrixXd(2,length);
+
+	for (int i = 0; i < length; i++){
+		pts(0,i) =   cos(-carPsi) * (ptsx[i] - carX) - sin(-carPsi) * (ptsy[i] - carY);
+		pts(1,i) =  sin(-carPsi) * (ptsx[i] - carX) + cos(-carPsi) * (ptsy[i] - carY);
+	}
+
+	return pts;
 }
 
 int main() {
@@ -91,15 +105,42 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double delta = j[1]["steering_angle"];
+          double acceleration = j[1]["throttle"];
 
+          const double Lf = 2.67;
+          //mph -> m/s
+          v = v * 0.44704;
+          double latency = 0.1;
+          px = px + v * cos(psi) * latency;
+          py = py + v * sin(psi) * latency;
+          psi = psi + v * delta/Lf * latency;
+          v = v + acceleration * latency;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
           *
           */
+          Eigen::MatrixXd points = translateGlobalToLocalCoordinates(px, py, psi, ptsx, ptsy);
+          Eigen::VectorXd xPoints = points.row(0);
+		  Eigen::VectorXd yPoints = points.row(1);
+
           double steer_value;
           double throttle_value;
+
+          auto coeffs = polyfit(xPoints, yPoints, 3);
+          double cte = polyeval(coeffs, 0);
+          double ote = - atan(coeffs[1]);
+
+          //Car's state in its corrdinate system
+          Eigen::VectorXd state(6);
+          state << 0, 0, 0, v, cte, ote;
+
+          auto values = mpc.Solve(state, coeffs);
+          steer_value = values[0];
+          steer_value /= deg2rad(25);
+          throttle_value = values[1];
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -113,7 +154,10 @@ int main() {
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
-
+          for (int i = 2; i < values.size(); i += 2) {
+        	  mpc_x_vals.push_back(values[i]);
+              mpc_y_vals.push_back(values[i+1]);
+          }
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;
 
@@ -123,7 +167,10 @@ int main() {
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
-
+		  for (int i=0; i < ptsx.size(); ++i) {
+        	  next_x_vals.push_back(xPoints(i));
+        	  next_y_vals.push_back(yPoints(i));
+          }
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
 
