@@ -118,20 +118,20 @@ int main() {
 			const double Lf = 2.67;
 			double latency = 0.1;
 
-			px += v * cos(psi) * latency;
-			py += v * sin(psi) * latency;
-			psi += v * -delta/ Lf * latency;
-			v += acceleration*latency;
+			double new_px = v * cos(delta) * latency;
+			double new_py = -v * sin(delta) * latency;
+			double new_psi = -v * delta/Lf * latency;
+			double new_v = v + acceleration * latency;
 
 			Eigen::VectorXd xPoints = points.row(0);
 			Eigen::VectorXd yPoints = points.row(1);
 
 			auto coeffs = polyfit(xPoints, yPoints, 3);
-			double cte = polyeval(coeffs, 0);
-			double ote = - atan(coeffs[1]);
+			double cte = polyeval(coeffs, new_px);
+			double ote = - atan(coeffs[1] + coeffs(2) * new_px + coeffs(3) * new_px * new_px);
 
 			Eigen::VectorXd car_state(6);
-			car_state << 0, 0, 0, v, cte, ote;
+			car_state << new_px, new_py, new_psi, new_v, cte, ote;
 
 			auto solved = mpc.Solve(car_state, coeffs);
 
