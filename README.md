@@ -13,10 +13,13 @@ cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
 epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
 
 Also two actuator values were optimized by code: steering value and throttle as an addition to the
-state vector. I started with the the same values for N and dt as were used from quiz but found that
-they doesn't work in simulator well. Car sometimes lost its track and crash somewhere. I think it is
-because were trying to predict too far. Then I decreased N to 15 - it works fine. And also increased
-dt to 0.1 to align it with latency.
+state vector.
+I started with the the same values for N = 20 and dt = 0.1 as were used from quiz and they worked fine
+for max speed = 40 mph Then I tried to increase max speed and found car is going off the road on first or second
+long turn, it did not work in highly changed environment. Then I decreased N to 10 and car were passing first left
+but fails on s-type turns, car's oscillations were too high. Next step was to increase N to 15 and decrease dt=0.05.
+Computational time increased a bit but not too much and car started be be more stable on road on speed up to 80.
+Still car has some oscillations after s-type turns but remains on the road.
 The waypoints are coming in global coordinates and therefore are needed to be translated into car's
 coordinate system like were done in particle filter project.
 For calculating steering values I needed to play a bit with penalties. I found that if setting high values
