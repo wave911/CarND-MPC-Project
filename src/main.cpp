@@ -118,8 +118,10 @@ int main() {
 			const double Lf = 2.67;
 			double latency = 0.1;
 
-			double new_px = v * cos(delta) * latency;
-			double new_py = -v * sin(delta) * latency;
+			//since translated to car's coordinates
+			psi = 0;
+			double new_px = v * cos(psi) * latency;
+			double new_py = -v * sin(psi) * latency;
 			double new_psi = -v * delta/Lf * latency;
 			double new_v = v + acceleration * latency;
 
@@ -128,14 +130,14 @@ int main() {
 
 			auto coeffs = polyfit(xPoints, yPoints, 3);
 			double cte = polyeval(coeffs, new_px);
-			double ote = - atan(coeffs[1] + coeffs(2) * new_px + coeffs(3) * new_px * new_px);
+			double ote = - atan(coeffs[1] + 2 * coeffs(2) * new_px + 3 * coeffs(3) * new_px * new_px);
 
 			Eigen::VectorXd car_state(6);
 			car_state << new_px, new_py, new_psi, new_v, cte, ote;
 
 			auto solved = mpc.Solve(car_state, coeffs);
 
-			steer_value = solved[0];
+			steer_value = -solved[0];
 			throttle_value = solved[1];
 			std::cout << "Throttle: " << throttle_value << std::endl;
 			steer_value /= deg2rad(25);

@@ -17,11 +17,18 @@ state vector.
 I started with the the same values for N = 20 and dt = 0.1 as were used from quiz and they worked fine
 for max speed = 40 mph Then I tried to increase max speed and found car is going off the road on first or second
 long turn, it did not work in highly changed environment. Then I decreased N to 10 and car were passing first left
-but fails on s-type turns, car's oscillations were too high. Next step was to increase N to 15 and decrease dt=0.05.
-Computational time increased a bit but not too much and car started be be more stable on road on speed up to 80.
+but fails on s-type turns, car's oscillations were too high. Next step was to increase N to 12 and decrease dt=0.07.
+Computational time increased a bit but not too much and car started be be more stable on road on speed up to 70.
 Still car has some oscillations after s-type turns but remains on the road.
 The waypoints are coming in global coordinates and therefore are needed to be translated into car's
 coordinate system like were done in particle filter project.
+One of the requirements for the project is to be able to handle 100 ms latency since it would reflect real world system.
+I've done by using the following equations:
+new_x = (x = 0) + v * cos(psi) * latency
+new_y = (y = 0) + v * sin(psi) * latency
+new_psi = (psi = 0) - v * delta/Lf * latency
+Due translation to car's coordinate system first addendums in equations will be = 0.
+new_v = v + a * latency
 For calculating steering values I needed to play a bit with penalties. I found that if setting high values
 leads to more smoother driving but it can ended up with leaving the road but setting too low values
 leads to too sharp driving which is also not good. So try and error approach was used.
